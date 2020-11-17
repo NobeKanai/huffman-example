@@ -5,19 +5,22 @@ export interface TreeNode {
 }
 
 /** ENCODE TEXT */
-export function encode(
-  text: string,
-  codes: Map<string, string>
-): Array<string> {
+export function encode(text: string, codes: Map<string, string>): string {
   let result: Array<string> = [];
   for (let i = 0; i < text.length; i++) {
-    result.push(codes.get(text[i]) as string);
+    result.push(codes.get(text[i])!);
   }
-  return result;
+  return result.join("");
 }
 
 /** DECODE TEXT */
 export function decode(text: string, codes: Map<string, string>): string {
+  // 生成反向codes
+  let reversedCodes: Map<string, string> = new Map();
+  codes.forEach((value, key) => {
+    reversedCodes.set(value, key);
+  });
+
   // 双指针
   let result: Array<string> = [];
   let i = 0,
@@ -25,10 +28,7 @@ export function decode(text: string, codes: Map<string, string>): string {
   let tmp: string | undefined;
   for (; j <= text.length; j++) {
     // 如果存在此symbol, 直接返回， 跳转i指针到j
-    tmp = undefined;
-    codes.forEach((value, key) => {
-      if (value === text.slice(i, j)) tmp = key;
-    });
+    tmp = reversedCodes.get(text.slice(i, j));
 
     if (tmp !== undefined) {
       result.push(tmp);
@@ -37,16 +37,6 @@ export function decode(text: string, codes: Map<string, string>): string {
   }
 
   return result.join("");
-}
-
-/** GET ENTROPY */
-export function getEntropyOfText(text: string): number {
-  let relFreq: Array<any> = getRelativeFrequency(getFrequency(text));
-  let entropy: number = 0;
-  for (let i = 0; i < relFreq.length; i++) {
-    entropy += relFreq[i][1] * Math.log2(relFreq[i][1]);
-  }
-  return -entropy;
 }
 
 /** GET SYMBOLS CODES FROM TEXT */
@@ -58,25 +48,10 @@ export function getCodesFromText(text: string): Map<string, string> {
 
   let codes: Map<string, string> = new Map(); // Array with symbols and codes
   symbols.forEach((element) => {
-    codes.set(element, getSymbolCode(tree as TreeNode, element));
+    codes.set(element, getSymbolCode(tree!, element)); // symbols' length > 0, so tree must exists
   });
 
   return codes;
-}
-
-//** GET RELATIVE FREQUENCY */
-export function getRelativeFrequency(arr: Array<any>): Array<any> {
-  let length: number = 0;
-  let resArr: Array<any> = [];
-  for (let i = 0; i < arr.length; i++) {
-    length += arr[i][1];
-  }
-  for (let i = 0; i < arr.length; i++) {
-    let relFreq = arr[i][1] / length;
-    resArr.push([arr[i][0], relFreq]);
-  }
-
-  return resArr;
 }
 
 /** GET CODE FOR SYMBOL */
@@ -117,22 +92,13 @@ function getSymbolCode(
     return getSymbolCode(arr[1], symbol, code + 1);
 }
 
-/** GET SYMBOLS FREQUENCY FRON TEXT */
+/** GET SYMBOLS FREQUENCY FROM TEXT */
 export function getFrequency(text: string): Array<any> {
   let freq: Map<string, number> = new Map();
 
-  for (let i = 0; i < text.length; i++) {
-    let counter: number = 0;
-    for (let j = 0; j < text.length; j++) {
-      if (!freq.has(text[i])) {
-        if (text[i] === text[j] && i !== j) {
-          counter++;
-        }
-      }
-    }
-    if (!freq.has(text[i])) {
-      freq.set(text[i], counter + 1);
-    }
+  for (let char of text) {
+    if (freq.get(char) === undefined) freq.set(char, 1);
+    else freq.set(char, freq.get(char)! + 1);
   }
 
   let sortArr = Array.from(freq); //descending sorting
@@ -155,9 +121,9 @@ export function getTree(arr: Array<any>) {
   let min1, min2: TreeNode;
 
   while (arr.length > 1) {
-    min1 = searchMinWeightNode(arr) as TreeNode;
+    min1 = searchMinWeightNode(arr)!;
     arr.splice(arr.indexOf(min1), 1);
-    min2 = searchMinWeightNode(arr) as TreeNode;
+    min2 = searchMinWeightNode(arr)!;
     arr.splice(arr.indexOf(min2), 1);
 
     tree = createNode(min1, min2);
@@ -186,8 +152,8 @@ function createNode(node1: TreeNode, node2: TreeNode): TreeNode | undefined {
 }
 
 /** SEARCH NODE WITH MINIMAL WEIGHT IN TREE */
-function searchMinWeightNode(arr: Array<any>, minNumber: number = -1) {
-  let min = 9999;
+function searchMinWeightNode(arr: Array<TreeNode>, minNumber: number = -1) {
+  let min = Number.POSITIVE_INFINITY;
   let result: TreeNode | undefined;
   for (let i = 0; i < arr.length; i++) {
     if (arr[i].weight <= min && arr[i].weight >= minNumber) {

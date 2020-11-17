@@ -95,7 +95,7 @@ export default defineComponent({
       return getCodesFromText(this.realContent);
     },
     encodedText(): string {
-      return encode(this.realContent, this.codes).join("");
+      return encode(this.realContent, this.codes);
     },
     decodedText(): string {
       return decode(this.needsDecode, this.codes);
