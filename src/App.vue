@@ -2,7 +2,7 @@
   <!-- modal -->
   <div
     v-if="modalShow"
-    class="w-screen h-screen absolute z-10 flex items-center justify-center"
+    class="w-screen h-screen fixed z-10 flex items-center justify-center"
     @click.self="modalShow = false"
   >
     <div
@@ -44,7 +44,11 @@
       ></textarea>
     </div>
     <h1 class="text-center text-3xl mt-2 mb-4">Frequency Table</h1>
-    <div class="flex flex-wrap -mx-1">
+    <transition-group
+      tag="div"
+      class="flex flex-wrap -mx-1"
+      move-class="transition-transform duration-300 ease-linear"
+    >
       <div
         class="flex flex-col border-black border flex-1"
         v-for="freq in frequency"
@@ -54,9 +58,13 @@
         <hr class="border-t-4 border-gray-400">
         <div class="px-8 py-2 text-center">{{ freq[1] }}</div>
       </div>
-    </div>
+    </transition-group>
     <h1 class="text-center text-3xl mt-2 mb-4">Huffman Table</h1>
-    <div class="flex flex-wrap -mx-1">
+    <transition-group
+      tag="div"
+      class="flex flex-wrap -mx-1"
+      move-class="transition-transform duration-300 ease-linear"
+    >
       <div
         class="flex flex-col border-black border flex-1"
         v-for="k in orderedCodes.keys()"
@@ -66,7 +74,7 @@
         <hr class="border-t-4 border-gray-400">
         <div class="px-8 py-2 text-center">{{ orderedCodes.get(k) }}</div>
       </div>
-    </div>
+    </transition-group>
     <div class="text-center mt-8">
       <button
         @click="modalShow = true"
@@ -134,7 +142,7 @@ export default defineComponent({
       return char
         .replace("\n", "\\n")
         .replace("\t", "\\t")
-        .replace(" ", "&nbsp");
+        .replace(" ", "&nbsp;");
     },
   },
 });
