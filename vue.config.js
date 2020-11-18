@@ -1,6 +1,6 @@
 module.exports = {
   lintOnSave: false,
-  publicPath: process.env.NODE_ENV === 'production'
+  publicPath: process.env.NODE_ENV === 'production' && !process.env.IS_NETLIFY === 'yes'
     ? '/huffman/'
     : '/'
 }
