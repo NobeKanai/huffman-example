@@ -1,4 +1,4 @@
-# haffman-code
+# huffman-code
 
 ## Project setup
 ```
