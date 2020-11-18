@@ -1,5 +1,7 @@
+import { OrderedQueue } from "./queue";
+
 export interface TreeNode {
-  symbols: Array<string>;
+  symbol?: string;
   weight: number;
   leafs: Array<TreeNode>;
 }
@@ -15,21 +17,20 @@ export function encode(text: string, codes: Map<string, string>): string {
 
 /** DECODE TEXT */
 export function decode(text: string, codes: Map<string, string>): string {
-  // 生成反向codes
+  // generate reversed codes
   let reversedCodes: Map<string, string> = new Map();
   codes.forEach((value, key) => {
     reversedCodes.set(value, key);
   });
 
-  // 双指针
+  // two pointers
   let result: Array<string> = [];
   let i = 0,
     j = 1;
   let tmp: string | undefined;
   for (; j <= text.length; j++) {
-    // 如果存在此symbol, 直接返回， 跳转i指针到j
     tmp = reversedCodes.get(text.slice(i, j));
-
+    // if tmp exists, return directly, let i jump to j
     if (tmp !== undefined) {
       result.push(tmp);
       i = j;
@@ -41,59 +42,34 @@ export function decode(text: string, codes: Map<string, string>): string {
 
 /** GET SYMBOLS CODES FROM TEXT */
 export function getCodesFromText(text: string): Map<string, string> {
-  const frequencyArr: Array<any> = getFrequency(text);
-  const symbols = frequencyArr.map((item) => item[0]);
+  const frequencyArr = getFrequency(text);
 
   let tree = getTree(frequencyArr);
-
-  let codes: Map<string, string> = new Map(); // Array with symbols and codes
-  symbols.forEach((element) => {
-    codes.set(element, getSymbolCode(tree!, element)); // symbols' length > 0, so tree must exists
-  });
+  let codes: Map<string, string> = new Map();
+  getSymbolCodes(codes, tree);
 
   return codes;
 }
 
-/** GET CODE FOR SYMBOL */
-function getSymbolCode(
-  tree: TreeNode,
-  symbol: string,
-  code: string = ""
-  // @ts-ignore
-): string {
-  let arr = [];
+/** GET CODES FORM TREE */
+function getSymbolCodes(
+  codes: Map<string, string>,
+  tree?: TreeNode,
+  tmpCharArray: Array<string> = []
+) {
+  if (!tree || (tree.leafs.length === 0 && !tree.symbol)) return;
+
   if (tree.leafs.length === 0) {
-    return code;
-  } else {
-    arr = tree.leafs;
+    codes.set(tree.symbol!, tmpCharArray.join(""));
+    return;
   }
 
-  if (arr[0].symbols.length === 1 && arr[0].symbols[0] === symbol)
-    return code + 0;
-  if (arr[0].symbols.length === 1 && arr[0].symbols[0] !== symbol) {
-    if (arr[1].symbols.length === 1 && arr[1].symbols[0] === symbol)
-      return code + 1;
-    if (arr[1].symbols.includes(symbol) === true)
-      return getSymbolCode(arr[1], symbol, code + 1);
-  }
-
-  if (arr[1].symbols.length === 1 && arr[1].symbols[0] === symbol)
-    return code + 1;
-  if (arr[1].symbols.length === 1 && arr[1].symbols[0] !== symbol) {
-    if (arr[0].symbols.length === 1 && arr[0].symbols[0] === symbol)
-      return code + 0;
-    if (arr[0].symbols.includes(symbol) === true)
-      return getSymbolCode(arr[0], symbol, code + 0);
-  }
-
-  if (arr[0].symbols.length >= 2 && arr[0].symbols.includes(symbol))
-    return getSymbolCode(arr[0], symbol, code + 0);
-  if (arr[1].symbols.length >= 2 && arr[1].symbols.includes(symbol))
-    return getSymbolCode(arr[1], symbol, code + 1);
+  getSymbolCodes(codes, tree.leafs[0], tmpCharArray.concat("0"));
+  getSymbolCodes(codes, tree.leafs[1], tmpCharArray.concat("1"));
 }
 
 /** GET SYMBOLS FREQUENCY FROM TEXT */
-export function getFrequency(text: string): Array<any> {
+export function getFrequency(text: string): Array<[string, number]> {
   let freq: Map<string, number> = new Map();
 
   for (let char of text) {
@@ -107,59 +83,49 @@ export function getFrequency(text: string): Array<any> {
 }
 
 /** GENERATE HUFFMAN TREE */
-export function getTree(arr: Array<any>) {
-  let tree: TreeNode | undefined;
-
-  arr = arr.map((elem) => {
-    return {
-      symbols: [elem[0]],
-      weight: elem[1],
-      leafs: [],
-    };
-  });
+export function getTree(arr: Array<[string, number]>) {
+  let parent: TreeNode | undefined;
+  let oq: OrderedQueue<TreeNode> = new OrderedQueue(
+    (a: TreeNode, b: TreeNode) => {
+      return a.weight - b.weight;
+    }
+  );
+  oq.enqueue(
+    ...arr.map((elem) => {
+      return {
+        symbol: elem[0],
+        weight: elem[1],
+        leafs: [],
+      };
+    })
+  );
 
   let min1, min2: TreeNode;
 
-  while (arr.length > 1) {
-    min1 = searchMinWeightNode(arr)!;
-    arr.splice(arr.indexOf(min1), 1);
-    min2 = searchMinWeightNode(arr)!;
-    arr.splice(arr.indexOf(min2), 1);
+  while (oq.length > 1) {
+    min1 = oq.dequeue()!;
+    min2 = oq.dequeue()!;
 
-    tree = createNode(min1, min2);
-    arr.push(tree);
+    parent = createNode(min1, min2)!;
+    oq.enqueue(parent);
   }
 
-  tree = createNode(arr[0], arr[1]);
-  return tree;
+  parent = createNode(oq.dequeue(), oq.dequeue());
+  return parent;
 }
 
 /** CREATE TREE NODE FROM TWO NODES */
-function createNode(node1: TreeNode, node2: TreeNode): TreeNode | undefined {
+function createNode(node1?: TreeNode, node2?: TreeNode): TreeNode | undefined {
   if (node1 === undefined) return undefined;
   if (node2 === undefined) return node1;
 
   let node: TreeNode;
   let weight: number = node1.weight + node2.weight;
-  let symbols: Array<string> = node1.symbols.concat(node2.symbols);
   let leafs: Array<TreeNode> = [node1, node2];
   node = {
-    symbols: symbols,
+    symbol: undefined,
     weight: weight,
     leafs: leafs,
   };
   return node;
-}
-
-/** SEARCH NODE WITH MINIMAL WEIGHT IN TREE */
-function searchMinWeightNode(arr: Array<TreeNode>, minNumber: number = -1) {
-  let min = Number.POSITIVE_INFINITY;
-  let result: TreeNode | undefined;
-  for (let i = 0; i < arr.length; i++) {
-    if (arr[i].weight <= min && arr[i].weight >= minNumber) {
-      min = arr[i].weight;
-      result = arr[i];
-    }
-  }
-  return result;
 }

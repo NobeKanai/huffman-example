@@ -15,14 +15,12 @@
         <p>Freq table</p>
         <table>
           <tr>
-            <!-- all chars -->
             <td
               v-for="(freq, index) in frequency"
               :key="index"
             >{{freq[0]}}</td>
           </tr>
           <tr>
-            <!-- all nums -->
             <td
               v-for="(freq , index) in frequency"
               :key="index"
@@ -35,13 +33,13 @@
         <table>
           <tr>
             <td
-              v-for="k in codes.keys()"
+              v-for="k in orderedCodes.keys()"
               :key="k"
             >{{k}}</td>
           </tr>
           <tr>
             <td
-              v-for="v in codes.values()"
+              v-for="v in orderedCodes.values()"
               :key="v"
             >{{v}}</td>
           </tr>
@@ -88,7 +86,7 @@ export default defineComponent({
       }
       return tempCharList.join("");
     },
-    frequency(): unknown[] {
+    frequency(): [string, number][] {
       return getFrequency(this.realContent);
     },
     codes(): Map<string, string> {
@@ -99,6 +97,15 @@ export default defineComponent({
     },
     decodedText(): string {
       return decode(this.needsDecode, this.codes);
+    },
+    orderedCodes(): Map<string, string> {
+      const oc: Map<string, string> = new Map();
+      let freq: [string, number];
+      for (freq of this.frequency) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        oc.set(freq[0], this.codes.get(freq[0])!);
+      }
+      return oc;
     },
   },
 });
