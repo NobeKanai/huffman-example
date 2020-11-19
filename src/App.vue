@@ -1,28 +1,38 @@
 <template>
   <!-- modal -->
-  <div
-    v-if="modalShow"
-    class="w-screen h-screen fixed z-10 flex items-center justify-center"
-    @click.self="modalShow = false"
+  <transition
+    enter-from-class="opacity-0"
+    enter-active-class="transition-all"
+    leave-active-class="transition-all"
+    leave-to-class="opacity-0"
   >
     <div
-      class="w-10/12 md:w-1/2 flex flex-col overflow-hidden"
-      style="max-width: 95%; height: 50vh;"
+      v-if="modalShow"
+      class="w-screen h-screen fixed z-10 flex items-center justify-center bg-black  bg-opacity-75"
+      @click.self="modalShow = false"
     >
-      <textarea
-        v-model="needsDecode"
-        rows="3"
-        placeholder="Exa: 10010100101"
-        class="bg-gray-300 overflow-hidden flex-1"
-      ></textarea>
-      <textarea
-        v-model="decodedText"
-        readonly
-        rows="3"
-        class="bg-gray-300 overflow-hidden flex-1"
-      ></textarea>
+      <div
+        class="w-10/12 md:w-1/2 flex flex-col overflow-hidden rounded-2xl p-4 bg-white space-y-4"
+        style="max-width: 95%;"
+      >
+        <h1 class="text-center text-2xl">Bidirectional Conversion</h1>
+        <textarea
+          v-model="needsEncode"
+          @input="updateNeedsDecode"
+          rows="5"
+          placeholder="decoded"
+          class="bg-gray-300  flex-1 rounded p-2"
+        ></textarea>
+        <textarea
+          v-model="needsDecode"
+          @input="updateNeedsEncode"
+          rows="5"
+          placeholder="encoded"
+          class="bg-gray-300  flex-1 rounded p-2"
+        ></textarea>
+      </div>
     </div>
-  </div>
+  </transition>
 
   <div class="mx-4 md:mx-20 lg:mx-64 flex flex-col mb-8">
     <h1 class="text-center text-3xl mt-2 mb-4">Raw to Real</h1>
@@ -46,40 +56,40 @@
     <h1 class="text-center text-3xl mt-2 mb-4">Frequency Table</h1>
     <transition-group
       tag="div"
-      class="flex flex-wrap -mx-1"
-      move-class="transition-transform duration-300 ease-linear"
+      class="table-container"
+      move-class="table-container__leave"
     >
       <div
-        class="flex flex-col border-black border flex-1"
+        class="grid-container"
         v-for="freq in frequency"
         :key="freq[0]"
       >
-        <div class="px-8 py-2 text-center">{{ rawChar(freq[0])}}</div>
-        <hr class="border-t-4 border-gray-400">
-        <div class="px-8 py-2 text-center">{{ freq[1] }}</div>
+        <div>{{ rawChar(freq[0])}}</div>
+        <hr>
+        <div>{{ freq[1] }}</div>
       </div>
     </transition-group>
     <h1 class="text-center text-3xl mt-2 mb-4">Huffman Table</h1>
     <transition-group
       tag="div"
-      class="flex flex-wrap -mx-1"
-      move-class="transition-transform duration-300 ease-linear"
+      class="table-container"
+      move-class="table-container__leave"
     >
       <div
-        class="flex flex-col border-black border flex-1"
+        class="grid-container"
         v-for="k in orderedCodes.keys()"
         :key="k"
       >
-        <div class="px-8 py-2 text-center">{{ rawChar(k) }}</div>
-        <hr class="border-t-4 border-gray-400">
-        <div class="px-8 py-2 text-center">{{ orderedCodes.get(k) }}</div>
+        <div>{{ rawChar(k) }}</div>
+        <hr>
+        <div>{{ orderedCodes.get(k) }}</div>
       </div>
     </transition-group>
     <div class="text-center mt-8">
       <button
         @click="modalShow = true"
         class="border rounded-full px-4 py-2 border-black hover:bg-black hover:text-white transition-colors duration-300"
-      >START ENCODE/ENCODE</button>
+      >START ENCODE/DECODE</button>
     </div>
   </div>
 
@@ -95,6 +105,7 @@ export default defineComponent({
     return {
       rawContent: "",
       needsDecode: "",
+      needsEncode: "",
       modalShow: false,
     };
   },
@@ -124,9 +135,9 @@ export default defineComponent({
     encodedText(): string {
       return encode(this.realContent, this.codes);
     },
-    decodedText(): string {
-      return decode(this.needsDecode, this.codes);
-    },
+    // decodedText(): string {
+    //   return decode(this.needsDecode, this.codes);
+    // },
     orderedCodes(): Map<string, string> {
       const oc: Map<string, string> = new Map();
       let freq: [string, number];
@@ -144,9 +155,27 @@ export default defineComponent({
         .replace("\t", "\\t")
         .replace(" ", "&nbsp;");
     },
+    updateNeedsEncode() {
+      this.needsEncode = decode(this.needsDecode, this.codes);
+    },
+    updateNeedsDecode() {
+      this.needsDecode = encode(this.needsEncode, this.codes);
+    },
   },
 });
 </script>
 
-<style lang="scss">
+<style lang="sass">
+.table-container
+  @apply flex flex-wrap -mx-1
+
+  & .grid-container
+    @apply flex flex-col border-black border flex-1
+
+    div
+      @apply px-8 py-2 text-center
+    hr
+      @apply border-t border-gray-400
+.table-container__leave
+  @apply transition-transform duration-300 ease-linear
 </style>
