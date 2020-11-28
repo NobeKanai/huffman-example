@@ -55,5 +55,5 @@ jobs:
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
           source: "dist/*"
-          target: "/root/v2deploy/huffman"
+          target: "/root/v2deploy/huffman/"
           rm: true
