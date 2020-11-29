@@ -50,14 +50,14 @@
 
         <button
           @click="modalShow=true"
-          class="my-4 border border-yellow-300 w-full py-1 hover:bg-yellow-300 transition duration-300 ease-linear"
+          class="my-4 border border-yellow-300 w-full py-1 hover:bg-yellow-300 bg-opacity-90 transition duration-300 ease-linear"
         >
           ENCODE/DECODE
         </button>
 
         <table class="table-auto w-full">
           <thead>
-            <tr class="text-left">
+            <tr class="text-left bg-red-500 text-white opacity-90">
               <th class="">Character</th>
               <th class="">Frequency</th>
               <th class="">Code</th>
@@ -72,6 +72,7 @@
             <tr
               v-for="[char, num] in huffman.frequency"
               :key="char"
+              class=" px-4 py-2 text-gray-800 font-medium odd:bg-gray-200"
             >
               <td>{{ rawChar(char) }}</td>
               <td>{{ num }}</td>
@@ -113,7 +114,7 @@ export default defineComponent({
   methods: {
     computeRealContent() {
       // 根据规则计算出真实字符串
-      // @ 清除前面(换行符后)的所有内容， # 删除上一个字符
+      // @ 清除前面(换行符后)的所有内容， #删除上一个字符
       const tempCharList: Array<string> = [];
       this.content.split("").forEach((char) => {
         if (char === "@") {
@@ -155,5 +156,9 @@ export default defineComponent({
 
 <style lang="sass">
 ._container
-  @apply rounded p-4
+  @apply p-4
+
+.link
+  fill: none
+  stroke: #ccc
 </style>

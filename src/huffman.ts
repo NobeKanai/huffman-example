@@ -1,5 +1,4 @@
 import { OrderedQueue } from "./queue";
-import { drawGraph } from "./graph";
 
 export interface TreeNode {
   symbol?: string;
@@ -41,7 +40,7 @@ export function decode (text: string, codes: Map<string, string>): string {
   return result.join("");
 }
 
-/** GET SYMBOLS CODES FROM TEXT */
+/** GET SYMBOLS CODES & FREQUENCY TABLE & HUFFMAN TREE FROM TEXT */
 export function getInfoFromText (text: string): [Map<string, string>, [string, number][], TreeNode?] {
   const frequencyArr = getFrequency(text);
 

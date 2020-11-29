@@ -9,8 +9,11 @@ module.exports = {
     './src/**/*.jsx',
   ],
   theme: {
-    extend: {},
   },
-  variants: {},
+  variants: {
+    extend: {
+      backgroundColor: ['odd'],
+    }
+  },
   plugins: [],
 }
