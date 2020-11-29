@@ -34,121 +34,108 @@
     </div>
   </transition>
 
-  <div class="mx-4 md:mx-20 lg:mx-64 flex flex-col mb-8">
-    <h1 class="text-center text-3xl mt-2 mb-4">Raw to Real</h1>
-    <div class="flex -mx-1">
-      <textarea
-        class="w-1/2 bg-gray-300 mx-1 p-4 overflow-hidden"
-        cols="30"
-        rows="4"
-        placeholder="Raw content"
-        v-model="rawContent"
-      ></textarea>
-      <textarea
-        disabled
-        class="w-1/2 bg-gray-300 mx-1 p-4 overflow-hidden"
-        cols="30"
-        rows="4"
-        placeholder=""
-        v-model="realContent"
-      ></textarea>
-    </div>
-    <h1 class="text-center text-3xl mt-2 mb-4">Frequency Table</h1>
-    <transition-group
-      tag="div"
-      class="table-container"
-      move-class="table-container__leave"
-    >
-      <div
-        class="grid-container"
-        v-for="freq in frequency"
-        :key="freq[0]"
-      >
-        <div>{{ rawChar(freq[0])}}</div>
-        <hr>
-        <div>{{ freq[1] }}</div>
+  <!-- main content -->
+  <div class="mx-4 max-w-full">
+    <h1 class="text-2xl font-semibold my-4">Huffman Coding</h1>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div class="_container">
+        <h2 class="text-xl">Encoder</h2>
+        <textarea
+          rows="3"
+          class="w-full border"
+          v-model="content"
+          @input="computeRealContent"
+        ></textarea>
+
+        <button
+          @click="modalShow=true"
+          class="my-4 border border-yellow-300 w-full py-1 hover:bg-yellow-300 transition duration-300 ease-linear"
+        >
+          ENCODE/DECODE
+        </button>
+
+        <table class="table-auto w-full">
+          <thead>
+            <tr class="text-left">
+              <th class="">Character</th>
+              <th class="">Frequency</th>
+              <th class="">Code</th>
+            </tr>
+          </thead>
+          <transition-group
+            tag="tbody"
+            class="transform transition"
+            enter-from-class="opacity-0"
+            move-class="duration-300 ease-linear"
+          >
+            <tr
+              v-for="[char, num] in huffman.frequency"
+              :key="char"
+            >
+              <td>{{ rawChar(char) }}</td>
+              <td>{{ num }}</td>
+              <td>{{ huffman.codes.get(char) }}</td>
+            </tr>
+          </transition-group>
+        </table>
       </div>
-    </transition-group>
-    <h1 class="text-center text-3xl mt-2 mb-4">Huffman Table</h1>
-    <transition-group
-      tag="div"
-      class="table-container"
-      move-class="table-container__leave"
-    >
-      <div
-        class="grid-container"
-        v-for="k in orderedCodes.keys()"
-        :key="k"
-      >
-        <div>{{ rawChar(k) }}</div>
-        <hr>
-        <div>{{ orderedCodes.get(k) }}</div>
+      <div class="_container">
+        <div class="graph">
+          {{drawGraph(huffman.rootNode, huffman.frequency.length, huffman.codes)}}
+        </div>
       </div>
-    </transition-group>
-    <div class="text-center mt-8">
-      <button
-        @click="modalShow = true"
-        class="border rounded-full px-4 py-2 border-black hover:bg-black hover:text-white transition-colors duration-300"
-      >START ENCODE/DECODE</button>
     </div>
   </div>
-
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { decode, encode, getCodesFromText, getFrequency } from "./huffman";
+import { drawGraph } from "./graph";
+import { decode, encode, getInfoFromText, TreeNode } from "./huffman";
 
 export default defineComponent({
   name: "App",
   data() {
     return {
-      rawContent: "",
+      content: "",
       needsDecode: "",
       needsEncode: "",
       modalShow: false,
+      huffman: {
+        frequency: [] as [string, number][],
+        codes: {} as Map<string, string>,
+        rootNode: {} as TreeNode | undefined,
+      },
     };
   },
-  computed: {
-    realContent(): string {
+  computed: {},
+  methods: {
+    computeRealContent() {
       // 根据规则计算出真实字符串
-      // @ 清除前面的所有内容， # 删除上一个字符
+      // @ 清除前面(换行符后)的所有内容， # 删除上一个字符
       const tempCharList: Array<string> = [];
-      this.rawContent.split("").forEach((char) => {
+      this.content.split("").forEach((char) => {
         if (char === "@") {
-          const lastIndexOfReturn = tempCharList.lastIndexOf("\n") + 1;
+          const lastIndexOfNewLine = tempCharList.lastIndexOf("\n") + 1;
           tempCharList.splice(
-            lastIndexOfReturn,
-            tempCharList.length - lastIndexOfReturn
+            lastIndexOfNewLine,
+            tempCharList.length - lastIndexOfNewLine
           );
         } else if (char === "#") tempCharList.pop();
         else tempCharList.push(char);
       });
-      return tempCharList.join("");
+      this.content = tempCharList.join("");
+
+      this.getHuffman();
     },
-    frequency(): [string, number][] {
-      return getFrequency(this.realContent);
+    getHuffman() {
+      [
+        this.huffman.codes,
+        this.huffman.frequency,
+        this.huffman.rootNode,
+      ] = getInfoFromText(this.content);
     },
-    codes(): Map<string, string> {
-      return getCodesFromText(this.realContent);
-    },
-    encodedText(): string {
-      return encode(this.realContent, this.codes);
-    },
-    // decodedText(): string {
-    //   return decode(this.needsDecode, this.codes);
-    // },
-    orderedCodes(): Map<string, string> {
-      const oc: Map<string, string> = new Map();
-      let freq: [string, number];
-      for (freq of this.frequency) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        oc.set(freq[0], this.codes.get(freq[0])!);
-      }
-      return oc;
-    },
-  },
-  methods: {
     rawChar(char: string): string {
       return char
         .replace("\n", "\\n")
@@ -156,26 +143,17 @@ export default defineComponent({
         .replace(" ", "Space");
     },
     updateNeedsEncode() {
-      this.needsEncode = decode(this.needsDecode, this.codes);
+      this.needsEncode = decode(this.needsDecode, this.huffman.codes);
     },
     updateNeedsDecode() {
-      this.needsDecode = encode(this.needsEncode, this.codes);
+      this.needsDecode = encode(this.needsEncode, this.huffman.codes);
     },
+    drawGraph: drawGraph,
   },
 });
 </script>
 
 <style lang="sass">
-.table-container
-  @apply flex flex-wrap -mx-1
-
-  & .grid-container
-    @apply flex flex-col border-black border flex-1
-
-    div
-      @apply px-8 py-2 text-center
-    hr
-      @apply border-t border-gray-400
-.table-container__leave
-  @apply transition-transform duration-300 ease-linear
+._container
+  @apply rounded p-4
 </style>

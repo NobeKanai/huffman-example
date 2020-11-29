@@ -1,9 +1,10 @@
 import { OrderedQueue } from "./queue";
+import { drawGraph } from "./graph";
 
 export interface TreeNode {
   symbol?: string;
   weight: number;
-  leafs: [TreeNode?, TreeNode?];
+  leafs: Array<TreeNode>;
 }
 
 /** ENCODE TEXT */
@@ -41,14 +42,14 @@ export function decode (text: string, codes: Map<string, string>): string {
 }
 
 /** GET SYMBOLS CODES FROM TEXT */
-export function getCodesFromText (text: string): Map<string, string> {
+export function getInfoFromText (text: string): [Map<string, string>, [string, number][], TreeNode?] {
   const frequencyArr = getFrequency(text);
 
   let tree = getTree(frequencyArr);
   let codes: Map<string, string> = new Map();
   getSymbolCodes(codes, tree);
 
-  return codes;
+  return [codes, frequencyArr, tree];
 }
 
 /** GET CODES FORM TREE */
@@ -121,7 +122,7 @@ function createNode (node1?: TreeNode, node2?: TreeNode): TreeNode | undefined {
 
   let node: TreeNode;
   let weight: number = node1.weight + node2.weight;
-  let leafs: [TreeNode, TreeNode] = [node1, node2];
+  let leafs = [node1, node2];
   node = {
     symbol: undefined,
     weight: weight,
