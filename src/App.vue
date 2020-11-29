@@ -153,7 +153,7 @@ export default defineComponent({
       return char
         .replace("\n", "\\n")
         .replace("\t", "\\t")
-        .replace(" ", "&nbsp;");
+        .replace(" ", "Space");
     },
     updateNeedsEncode() {
       this.needsEncode = decode(this.needsDecode, this.codes);

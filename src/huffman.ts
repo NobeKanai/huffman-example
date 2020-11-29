@@ -3,11 +3,11 @@ import { OrderedQueue } from "./queue";
 export interface TreeNode {
   symbol?: string;
   weight: number;
-  leafs: Array<TreeNode>;
+  leafs: [TreeNode?, TreeNode?];
 }
 
 /** ENCODE TEXT */
-export function encode(text: string, codes: Map<string, string>): string {
+export function encode (text: string, codes: Map<string, string>): string {
   let result: Array<string> = [];
   for (let i = 0; i < text.length; i++) {
     result.push(codes.get(text[i])!);
@@ -16,7 +16,7 @@ export function encode(text: string, codes: Map<string, string>): string {
 }
 
 /** DECODE TEXT */
-export function decode(text: string, codes: Map<string, string>): string {
+export function decode (text: string, codes: Map<string, string>): string {
   // generate reversed codes
   let reversedCodes: Map<string, string> = new Map();
   codes.forEach((value, key) => {
@@ -41,7 +41,7 @@ export function decode(text: string, codes: Map<string, string>): string {
 }
 
 /** GET SYMBOLS CODES FROM TEXT */
-export function getCodesFromText(text: string): Map<string, string> {
+export function getCodesFromText (text: string): Map<string, string> {
   const frequencyArr = getFrequency(text);
 
   let tree = getTree(frequencyArr);
@@ -52,7 +52,7 @@ export function getCodesFromText(text: string): Map<string, string> {
 }
 
 /** GET CODES FORM TREE */
-function getSymbolCodes(
+function getSymbolCodes (
   codes: Map<string, string>,
   tree?: TreeNode,
   tmpCharArray: Array<string> = []
@@ -69,7 +69,7 @@ function getSymbolCodes(
 }
 
 /** GET SYMBOLS FREQUENCY FROM TEXT */
-export function getFrequency(text: string): Array<[string, number]> {
+export function getFrequency (text: string): Array<[string, number]> {
   let freq: Map<string, number> = new Map();
 
   for (let char of text) {
@@ -83,7 +83,7 @@ export function getFrequency(text: string): Array<[string, number]> {
 }
 
 /** GENERATE HUFFMAN TREE */
-export function getTree(arr: Array<[string, number]>) {
+export function getTree (arr: Array<[string, number]>) {
   let parent: TreeNode | undefined;
   let oq: OrderedQueue<TreeNode> = new OrderedQueue(
     (a: TreeNode, b: TreeNode) => {
@@ -96,7 +96,7 @@ export function getTree(arr: Array<[string, number]>) {
         symbol: elem[0],
         weight: elem[1],
         leafs: [],
-      };
+      } as TreeNode;
     })
   );
 
@@ -115,13 +115,13 @@ export function getTree(arr: Array<[string, number]>) {
 }
 
 /** CREATE TREE NODE FROM TWO NODES */
-function createNode(node1?: TreeNode, node2?: TreeNode): TreeNode | undefined {
+function createNode (node1?: TreeNode, node2?: TreeNode): TreeNode | undefined {
   if (node1 === undefined) return undefined;
   if (node2 === undefined) return node1;
 
   let node: TreeNode;
   let weight: number = node1.weight + node2.weight;
-  let leafs: Array<TreeNode> = [node1, node2];
+  let leafs: [TreeNode, TreeNode] = [node1, node2];
   node = {
     symbol: undefined,
     weight: weight,
